@@ -27,7 +27,8 @@
 
 static std::thread g_AutoSaveThread;
 static bool g_Initialized = false;
-static int g_AutoSaveInterval;
+static int g_AutoSaveInterval = -1;
+static bool g_ManuallySavedByUser = false;
 
 //
 // Helper functions
@@ -49,11 +50,15 @@ static void DisplayError(const char* fmt, ...)
 // Detour functions
 //
 
+// TODO: find save function when user presses ctrl + s
+// and set g_ManuallySavedByUser there
+
 // save function from game
 static_detour(GameSaveFunction, void(void))
 {
 	void detoured(void)
 	{
+		g_ManuallySavedByUser = true;
 		return original_function();
 	}
 };
@@ -64,10 +69,71 @@ static_detour(GameSaveFunction, void(void))
 
 static void AutosaveThreadFunc()
 {
+	// when we just got ingame, we don't want to save directly,
+	// so add an initial sleep bool
+	bool justInGameHasSlept = false;
+
+	// we need a manual timer sadly,
+	// because when we're ingame and 
+	// i.e the user has just entered a game, 
+	// the timer should reset,
+	// if I use sleep(specified duration),
+	// it's possible that the duration doubles,
+	// or that the duration is less than specified
+	// due to jumping ingame mid-sleep.
+	int secondsPassed = 0;
+	int minutesPassed = 0;
+
 	while (true)
 	{
-		std::this_thread::sleep_for(std::chrono::minutes(g_AutoSaveInterval));
-		GameSaveFunction::original_function();
+		bool specifiedTimePassed = minutesPassed >= g_AutoSaveInterval;
+
+		// TODO, check if in menu, sporepedia, settings..
+		bool shouldSave = Simulator::IsCellGame() ||
+							Simulator::IsTribeGame() ||
+							Simulator::IsCivGame() ||
+							Simulator::IsSpaceGame();
+
+		// reset timer
+		if (specifiedTimePassed)
+		{
+			secondsPassed = minutesPassed = 0;
+		}
+
+		if (g_ManuallySavedByUser)
+		{ // handle manually saving by user
+			g_ManuallySavedByUser = false;
+			justInGameHasSlept = true;
+		}
+		else if (!justInGameHasSlept && shouldSave)
+		{ // we can save but just got ingame
+			justInGameHasSlept = true;
+		}
+		else if (shouldSave)
+		{ // call the save function when we're in a game
+			if (specifiedTimePassed)
+			{
+				GameSaveFunction::original_function();
+			}
+		}
+		else 
+		{ // if we're not in a game, keep retrying until we are
+			justInGameHasSlept = false;
+			// let's not spin up the cpu too much...
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			continue;
+		}
+		
+		// let's not spin up the cpu too much
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+
+		// increase seconds & minutes
+		secondsPassed++;
+		if (secondsPassed >= 60)
+		{
+			secondsPassed = 0;
+			minutesPassed++;
+		}
 	}
 }
 
