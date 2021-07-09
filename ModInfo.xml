@@ -1,0 +1,7 @@
+<mod displayName="SporeAutoSave" 
+	unique="SporeAutoSave" 
+	description="AutoSaves" 
+	installerSystemVersion="1.0.1.1" 
+	dllsBuild="2.5.20">
+	<prerequisite>SporeAutoSave.dll</prerequisite>
+</mod>
