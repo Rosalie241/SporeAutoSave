@@ -20,6 +20,8 @@
 
 #include <thread>
 #include <string>
+#include <filesystem>
+#include <chrono>
 
 //
 // Global variables
@@ -62,6 +64,9 @@ static const uint32_t g_WindowList[] =
     0x01510D07,
 };
 
+static std::string g_SavePath;
+
+
 //
 // Helper functions
 //
@@ -90,6 +95,74 @@ static bool ArrayContains(const uint32_t list[], int listSize, uint32_t item)
     }
 
     return false;
+}
+
+static std::vector<std::string> GetBackupSaveList(void)
+{
+    std::vector<std::string> backupSaveList;
+
+    for (const auto& entry : std::filesystem::directory_iterator(g_SavePath))
+    {
+        std::string path = entry.path().string();
+        if (path.find(".Backup.") == std::string::npos ||
+            !std::filesystem::is_directory(entry))
+        { // skip directories which don't contain .Backup.
+          // or aren't a directory
+            continue;
+        }
+
+        backupSaveList.push_back(path);
+    }
+
+    // sort directories, make sure the oldest backup save is first
+    std::sort(backupSaveList.begin(), backupSaveList.end(), [](std::string a, std::string b) {
+        auto aTime = std::filesystem::last_write_time(a);
+        auto bTime = std::filesystem::last_write_time(b);
+
+        return aTime < bTime;
+    });
+
+    return backupSaveList;
+}
+
+static void BackupSave(void)
+{
+    if (!std::filesystem::exists(g_SavePath))
+    { // do nothing if the save directory doesn't exist (yet)
+        return;
+    }
+
+    auto backupSaveList = GetBackupSaveList();
+
+    // make sure we only keep a maximum of 5 backup saves
+    if (backupSaveList.size() >= 5)
+    {
+        std::string oldestBackupSave = backupSaveList.at(0);
+        try
+        {
+            std::filesystem::remove_all(oldestBackupSave);
+        }
+        catch (...)
+        {
+            DisplayError("Failed To Remove: %s", oldestBackupSave.c_str());
+        }
+    }
+
+    char backupDirectoryBuffer[256] = {0};
+    time_t currentTime = time(nullptr);
+    strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), "\\Game0.Backup.%F.%H_%M_%S", localtime(&currentTime));
+
+    std::string currentSavePath = g_SavePath + "\\Game0";
+    std::string backupSavePath  = g_SavePath + backupDirectoryBuffer;
+
+    try
+    {
+        std::filesystem::copy(currentSavePath, backupSavePath, std::filesystem::copy_options::recursive);
+    }
+    catch (...)
+    {
+        DisplayError("Failed To Copy %s To %s", currentSavePath.c_str(), backupSavePath.c_str());
+    }
 }
 
 //
@@ -215,6 +288,7 @@ static void AutosaveThreadFunc()
         { // call the save function when we're in a game
             if (specifiedTimePassed)
             {
+                BackupSave();
                 GameSaveFunction::original_function();
             }
         }
@@ -273,6 +347,16 @@ void Initialize()
         return;
     }
 
+    // set save path
+    g_SavePath = std::getenv("APPDATA");
+    if (g_SavePath.empty())
+    {
+        DisplayError("APPDATA Variable Is Empty, Disabling SporeAutoSave!");
+        return;
+    }
+    g_SavePath += "\\Spore\\Games";
+
+    // launch auto save thread
     g_AutoSaveThread = std::thread(AutosaveThreadFunc);
 
     // This method is executed when the game starts, before the user interface is shown
