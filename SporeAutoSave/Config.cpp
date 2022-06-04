@@ -36,7 +36,8 @@ namespace Config
         // create config file when it doesn't exist
         if (GetFileAttributesA(ConfigPath.c_str()) == INVALID_FILE_ATTRIBUTES)
         {
-            return SetValue("IntervalInMinutes", "10");
+            return SetValue("IntervalInMinutes", "10") &&
+                SetValue("MaximumAmountOfBackupSaves", "5");
         }
 
         return true;

@@ -65,6 +65,7 @@ static const uint32_t g_WindowList[] =
 };
 
 static std::string g_SavePath;
+static int g_MaximumAmountOfBackupSaves = -1;
 
 
 //
@@ -134,8 +135,8 @@ static void BackupSave(void)
 
     auto backupSaveList = GetBackupSaveList();
 
-    // make sure we only keep a maximum of 5 backup saves
-    if (backupSaveList.size() >= 5)
+    // make sure we only keep a certain amount of backup saves
+    if (backupSaveList.size() >= g_MaximumAmountOfBackupSaves)
     {
         std::string oldestBackupSave = backupSaveList.at(0);
         try
@@ -341,7 +342,7 @@ void Initialize()
             throw std::exception();
         }
     }
-    catch (std::exception)
+    catch (...)
     {
         DisplayError("IntervalInMinutes Is Invalid, Disabling SporeAutoSave!");
         return;
@@ -355,6 +356,23 @@ void Initialize()
         return;
     }
     g_SavePath += "\\Spore\\Games";
+
+    std::string maximumBackupsString = Config::GetValue("MaximumAmountOfBackupSaves", "5");
+    try
+    {
+        g_MaximumAmountOfBackupSaves = std::stoi(maximumBackupsString);
+
+        // safety check
+        if (g_MaximumAmountOfBackupSaves <= 0)
+        {
+            throw std::exception();
+        }
+    }
+    catch (...)
+    {
+        DisplayError("MaximumAmountOfBackupSaves Is Invalid, Disabling SporeAutoSave!");
+        return;
+    }
 
     // launch auto save thread
     g_AutoSaveThread = std::thread(AutosaveThreadFunc);
