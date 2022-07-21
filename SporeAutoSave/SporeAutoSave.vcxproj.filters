@@ -22,6 +22,9 @@
     <ClInclude Include="Config.hpp">
       <Filter>SporeAutoSave</Filter>
     </ClInclude>
+    <ClInclude Include="AutoSaveStrategy.hpp">
+      <Filter>SporeAutoSave</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -31,6 +34,9 @@
       <Filter>Internal</Filter>
     </ClCompile>
     <ClCompile Include="Config.cpp">
+      <Filter>SporeAutoSave</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoSaveStrategy.cpp">
       <Filter>SporeAutoSave</Filter>
     </ClCompile>
   </ItemGroup>
