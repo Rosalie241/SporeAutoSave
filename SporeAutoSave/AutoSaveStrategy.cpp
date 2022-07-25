@@ -145,8 +145,8 @@ std::vector<uint32_t> AutoSaveStrategy::GetHandledMessageIDs(void)
 {
     std::vector<uint32_t> handledMessageIDs;
 
-    handledMessageIDs.push_back((uint32_t)MessageID::kMsgOnSave);
-    handledMessageIDs.push_back((uint32_t)MessageID::kMsgOnPauseToggled);
+    handledMessageIDs.push_back((uint32_t)MessageID::OnSave);
+    handledMessageIDs.push_back((uint32_t)MessageID::OnPauseToggled);
 
     return handledMessageIDs;
 }
@@ -163,12 +163,12 @@ bool AutoSaveStrategy::HandleMessage(uint32_t messageID, void* message)
     default:
         break;
 
-    case (uint32_t)MessageID::kMsgOnSave:
+    case (uint32_t)MessageID::OnSave:
         m_NextSaveTime = std::chrono::high_resolution_clock::now() +
                          std::chrono::minutes(m_SaveIntervalInMinutes);
         break;
 
-    case (uint32_t)MessageID::kMsgOnPauseToggled:
+    case (uint32_t)MessageID::OnPauseToggled:
         if (m_IsPaused && message == nullptr)
         { // unpaused
             m_NextSaveTime =

@@ -18,8 +18,8 @@
 
 enum class MessageID : uint32_t
 {
-    kMsgOnSave = 0x1cd20f0,
-    kMsgOnPauseToggled = 0x3867294,
+    OnSave = 0x1cd20f0,
+    OnPauseToggled = 0x3867294,
 };
 
 class AutoSaveStrategy :
