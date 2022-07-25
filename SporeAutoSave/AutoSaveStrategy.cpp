@@ -64,7 +64,14 @@ bool AutoSaveStrategy::BackupSave()
 
     char backupDirectoryBuffer[256] = { 0 };
     time_t currentTime = time(nullptr);
-    strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), "\\Game0.Backup.%F.%H_%M_%S", localtime(&currentTime));
+    tm currentTimeTm;
+
+    if (localtime_s(&currentTimeTm, &currentTime) != 0)
+    {
+        return false;
+    }
+
+    strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), "\\Game0.Backup.%F.%H_%M_%S", &currentTimeTm);
 
     std::filesystem::path currentSavePath = m_SavePath;
     currentSavePath += "\\Game0";
