@@ -124,7 +124,8 @@ void AutoSaveStrategy::Update(int deltaTime, int deltaGameTime)
     }
     
     // also do nothing when we're on a planet in space,
-    // TODO, find out how the game knows we can save?
+    // Question: find out how the game knows we can save?
+    // Answer: see 0x00e030d9 (patched), it does the same
     if (Simulator::IsSpaceGame() &&
         Simulator::GetCurrentContext() == Simulator::SpaceContext::kSpaceContextPlanet)
     {
