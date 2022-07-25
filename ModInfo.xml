@@ -2,6 +2,6 @@
 	unique="SporeAutoSave" 
 	description="This is a Spore mod which makes Spore save at a set interval" 
 	installerSystemVersion="1.0.1.1" 
-	dllsBuild="2.5.179.0">
+	dllsBuild="2.5.179">
 	<prerequisite>SporeAutoSave.dll</prerequisite>
 </mod>
