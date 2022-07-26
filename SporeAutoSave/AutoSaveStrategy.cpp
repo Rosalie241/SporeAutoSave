@@ -58,7 +58,8 @@ bool AutoSaveStrategy::BackupSave()
         }
         catch (...)
         {
-            // silently fail
+            App::ConsolePrintF("SporeAutoSave: std::filesystem::remove_all(\"%s\") failed!", oldestBackupSave.string().c_str());
+            return false;
         }
     }
 
@@ -68,6 +69,7 @@ bool AutoSaveStrategy::BackupSave()
 
     if (localtime_s(&currentTimeTm, &currentTime) != 0)
     {
+        App::ConsolePrintF("SporeAutoSave: localtime_s() failed!");
         return false;
     }
 
@@ -84,7 +86,8 @@ bool AutoSaveStrategy::BackupSave()
     }
     catch (...)
     {
-        // silently fail
+        App::ConsolePrintF("SporeAutoSave: std::filesystem::copy(\"%s\", \"%s\") failed!", currentSavePath.c_str(), backupSavePath.c_str());
+        return false;
     }
 
     return true;
@@ -138,7 +141,17 @@ void AutoSaveStrategy::Update(int deltaTime, int deltaGameTime)
         return;
     }
 
-    BackupSave();
+    if (!BackupSave())
+    {
+        App::ConsolePrintF("SporeAutoSave: BackupSave() failed, skipping save!");
+        // try again in 1 minute when failed
+        // to prevent console spam
+        m_NextSaveTime =
+            std::chrono::high_resolution_clock::now() +
+            std::chrono::minutes(1);
+        return;
+    }
+
     SaveGame();
 }
 
