@@ -33,7 +33,7 @@ private:
     int m_SaveIntervalInMinutes = 0;
     int64_t m_TimeLeftUntilSaveWhenPausedInSeconds = 0;
 
-    std::filesystem::path m_SavePath;
+    std::filesystem::path m_BackupSavePath;
     size_t m_MaximumAmountOfBackupSaves = 0;
 
     bool m_IsInValidMode = false;
@@ -44,10 +44,10 @@ private:
     void SaveGame();
 
 public:
-    AutoSaveStrategy(int saveIntervalInMinutes, int maximumAmountOfBackupSaves, std::filesystem::path savePath)
+    AutoSaveStrategy(int saveIntervalInMinutes, int maximumAmountOfBackupSaves, std::filesystem::path backupSavePath)
         : m_SaveIntervalInMinutes(saveIntervalInMinutes),
           m_MaximumAmountOfBackupSaves(maximumAmountOfBackupSaves),
-          m_SavePath(savePath)
+          m_BackupSavePath(backupSavePath)
     {
     }
 

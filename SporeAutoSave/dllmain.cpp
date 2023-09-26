@@ -48,7 +48,7 @@ void Initialize()
 {
     int autoSaveIntervalInMinutes = 0;
     int maximumAmountOfBackupSaves = 0;
-    std::filesystem::path savePath;
+    std::filesystem::path backupSavePath;
     wchar_t envBuffer[MAX_PATH];
 
     if (!Config::Initialize())
@@ -57,7 +57,7 @@ void Initialize()
         return;
     }
 
-    std::string intervalString = Config::GetValue("IntervalInMinutes", "10");
+    std::wstring intervalString = Config::GetValue(L"IntervalInMinutes", L"10");
     try
     {
         autoSaveIntervalInMinutes = std::stoi(intervalString);
@@ -74,17 +74,10 @@ void Initialize()
         return;
     }
 
-    // set save path
-    if (GetEnvironmentVariableW(L"APPDATA", envBuffer, MAX_PATH) == 0)
-    {
-        DisplayError("GetEnvironmentVariableW() failed, disabling SporeAutoSave!");
-        return;
-    }
+    backupSavePath = Resource::Paths::GetDirFromID(Resource::PathID::AppData);
+    backupSavePath += "\\Games";
 
-    savePath = envBuffer;
-    savePath += "\\Spore\\Games";
-
-    std::string maximumBackupsString = Config::GetValue("MaximumAmountOfBackupSaves", "5");
+    std::wstring maximumBackupsString = Config::GetValue(L"MaximumAmountOfBackupSaves", L"5");
     try
     {
         maximumAmountOfBackupSaves = std::stoi(maximumBackupsString);
@@ -101,7 +94,7 @@ void Initialize()
         return;
     }
 
-    static AutoSaveStrategy autoSaveStrategy(autoSaveIntervalInMinutes, maximumAmountOfBackupSaves, savePath);
+    static AutoSaveStrategy autoSaveStrategy(autoSaveIntervalInMinutes, maximumAmountOfBackupSaves, backupSavePath);
 
     // add all message IDs
     for (const uint32_t messageID : autoSaveStrategy.GetHandledMessageIDs())

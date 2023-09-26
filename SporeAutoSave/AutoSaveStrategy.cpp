@@ -14,7 +14,7 @@ std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList()
 {
     std::vector<std::filesystem::path> backupSaveList;
 
-    for (const auto& entry : std::filesystem::directory_iterator(m_SavePath))
+    for (const auto& entry : std::filesystem::directory_iterator(m_BackupSavePath))
     {
         std::string path = entry.path().string();
         if (path.find(".Backup.") == std::string::npos ||
@@ -41,7 +41,7 @@ std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList()
 
 bool AutoSaveStrategy::BackupSave()
 {
-    if (!std::filesystem::exists(m_SavePath))
+    if (!std::filesystem::exists(m_BackupSavePath))
     { // do nothing if the save directory doesn't exist (yet)
         return true;
     }
@@ -75,9 +75,8 @@ bool AutoSaveStrategy::BackupSave()
 
     strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), "\\Game0.Backup.%F.%H_%M_%S", &currentTimeTm);
 
-    std::filesystem::path currentSavePath = m_SavePath;
-    currentSavePath += "\\Game0";
-    std::filesystem::path backupSavePath = m_SavePath;
+    std::filesystem::path currentSavePath = Resource::Paths::GetSaveArea(Resource::SaveAreaID::GamesGame0)->GetLocation();;
+    std::filesystem::path backupSavePath  = m_BackupSavePath;
     backupSavePath += backupDirectoryBuffer;
 
     try
@@ -130,7 +129,7 @@ void AutoSaveStrategy::Update(int deltaTime, int deltaGameTime)
     // Question: find out how the game knows we can save?
     // Answer: see 0x00e030d9 (patched), it does the same
     if (Simulator::IsSpaceGame() &&
-        Simulator::GetCurrentContext() == Simulator::SpaceContext::kSpaceContextPlanet)
+        Simulator::GetCurrentContext() == Simulator::SpaceContext::Planet)
     {
         return;
     }

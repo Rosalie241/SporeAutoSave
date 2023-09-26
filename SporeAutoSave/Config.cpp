@@ -14,46 +14,40 @@
 #include "stdafx.h"
 #include "Config.hpp"
 
-#define APP_NAME "SporeAutoSave"
+#include <filesystem>
 
-static std::string ConfigPath;
+#define APP_NAME L"SporeAutoSave"
+
+static std::filesystem::path ConfigPath;
 
 namespace Config
 {
     bool Initialize()
-    {
-        char* appdata = getenv("APPDATA");
-
-        if (appdata == nullptr)
-        {
-            // shouldn't happen
-            return false;
-        }
-
-        ConfigPath = appdata;
-        ConfigPath += "\\Spore\\Preferences\\SporeAutoSave.ini";
+    {     
+        ConfigPath = Resource::Paths::GetSaveArea(Resource::SaveAreaID::Preferences)->GetLocation();
+        ConfigPath += "\\SporeAutoSave.ini";
 
         // create config file when it doesn't exist
-        if (GetFileAttributesA(ConfigPath.c_str()) == INVALID_FILE_ATTRIBUTES)
+        if (GetFileAttributesW(ConfigPath.wstring().c_str()) == INVALID_FILE_ATTRIBUTES)
         {
-            return SetValue("IntervalInMinutes", "10") &&
-                SetValue("MaximumAmountOfBackupSaves", "5");
+            return SetValue(L"IntervalInMinutes", L"10") &&
+                SetValue(L"MaximumAmountOfBackupSaves", L"5");
         }
 
         return true;
     }
 
-    std::string GetValue(std::string keyName, std::string defaultValue)
+    std::wstring GetValue(std::wstring keyName, std::wstring defaultValue)
     {
-        char buf[MAX_PATH];
+        wchar_t buf[MAX_PATH];
 
-        GetPrivateProfileStringA(APP_NAME, keyName.c_str(), defaultValue.c_str(), buf, MAX_PATH, ConfigPath.c_str());
+        GetPrivateProfileStringW(APP_NAME, keyName.c_str(), defaultValue.c_str(), buf, MAX_PATH, ConfigPath.wstring().c_str());
 
-        return std::string(buf);
+        return std::wstring(buf);
     }
 
-    bool SetValue(std::string keyName, std::string value)
+    bool SetValue(std::wstring keyName, std::wstring value)
     {
-        return WritePrivateProfileStringA(APP_NAME, keyName.c_str(), value.c_str(), ConfigPath.c_str());
+        return WritePrivateProfileStringW(APP_NAME, keyName.c_str(), value.c_str(), ConfigPath.wstring().c_str());
     }
 }

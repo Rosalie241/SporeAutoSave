@@ -21,7 +21,7 @@ namespace Config
     /// <param name="keyName"></param>
     /// <param name="defaultValue"></param>
     /// <returns></returns>
-    std::string GetValue(std::string keyName, std::string defaultValue);
+    std::wstring GetValue(std::wstring keyName, std::wstring defaultValue);
 
     /// <summary>
     ///		Sets the value for keyName with value
@@ -29,5 +29,5 @@ namespace Config
     /// <param name="keyName"></param>
     /// <param name="value"></param>
     /// <returns>Whether setting the value was successful</returns>
-    bool SetValue(std::string keyName, std::string value);
+    bool SetValue(std::wstring keyName, std::wstring value);
 }
