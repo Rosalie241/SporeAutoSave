@@ -80,7 +80,7 @@
     </Link>
     <PreBuildEvent>
       <Command>if NOT EXIST "$(SporeSdkPath)dll\$(Configuration)\SporeModAPI.lib" (
-    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=180 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
+    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=280 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
 )</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -104,7 +104,7 @@
     </Link>
     <PreBuildEvent>
       <Command>if NOT EXIST "$(SporeSdkPath)dll\$(Configuration)\SporeModAPI.lib" (
-    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=180 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
+    msbuild "$(SporeSdkPath)Spore ModAPI" /t:BuildDlls /p:BuildVer=280 /p:Config=$(Configuration) /p:Platform=$(Platform) /m
 )</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
