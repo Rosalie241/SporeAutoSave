@@ -28,7 +28,7 @@ namespace Config
         ConfigPath += "\\SporeAutoSave.ini";
 
         // create config file when it doesn't exist
-        if (GetFileAttributesW(ConfigPath.wstring().c_str()) == INVALID_FILE_ATTRIBUTES)
+        if (!std::filesystem::is_regular_file(ConfigPath))
         {
             return SetValue(L"IntervalInMinutes", L"10") &&
                 SetValue(L"MaximumAmountOfBackupSaves", L"5");
