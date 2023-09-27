@@ -39,7 +39,7 @@ private:
     bool m_IsInValidMode = false;
     bool m_IsPaused = false;
 
-    std::vector<std::filesystem::path> GetBackupSaveList();
+    std::vector<std::filesystem::path> GetBackupSaveList(std::filesystem::path saveName);
     bool BackupSave();
     void SaveGame();
 

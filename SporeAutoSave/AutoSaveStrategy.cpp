@@ -10,14 +10,15 @@
 #include "stdafx.h"
 #include "AutoSaveStrategy.hpp"
 
-std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList()
+std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList(std::filesystem::path saveName)
 {
     std::vector<std::filesystem::path> backupSaveList;
+    std::wstring backupPathPrefix = saveName.wstring() + L".Backup.";
 
     for (const auto& entry : std::filesystem::directory_iterator(m_BackupSavePath))
     {
-        std::string path = entry.path().string();
-        if (path.find(".Backup.") == std::string::npos ||
+        std::wstring path = entry.path().wstring();
+        if (path.find(backupPathPrefix) == std::wstring::npos ||
             !std::filesystem::is_directory(entry))
         { // skip directories which don't contain .Backup.
           // or aren't a directory
@@ -46,7 +47,10 @@ bool AutoSaveStrategy::BackupSave()
         return true;
     }
 
-    auto backupSaveList = GetBackupSaveList();
+    std::filesystem::path currentSavePath = Resource::Paths::GetSaveArea(Resource::SaveAreaID::GamesGame0)->GetLocation();
+    std::filesystem::path backupSavePath  = m_BackupSavePath;
+    std::filesystem::path saveName        = currentSavePath.has_filename() ? currentSavePath.filename() : currentSavePath.parent_path().filename();
+    std::vector<std::filesystem::path> backupSaveList = GetBackupSaveList(saveName);
 
     // make sure we only keep a certain amount of backup saves
     if (backupSaveList.size() >= m_MaximumAmountOfBackupSaves)
@@ -73,10 +77,9 @@ bool AutoSaveStrategy::BackupSave()
         return false;
     }
 
-    strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), "\\Game0.Backup.%F.%H_%M_%S", &currentTimeTm);
+    strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), ".Backup.%F.%H_%M_%S", &currentTimeTm);
 
-    std::filesystem::path currentSavePath = Resource::Paths::GetSaveArea(Resource::SaveAreaID::GamesGame0)->GetLocation();;
-    std::filesystem::path backupSavePath  = m_BackupSavePath;
+    backupSavePath += L"\\" + saveName.wstring();
     backupSavePath += backupDirectoryBuffer;
 
     try
