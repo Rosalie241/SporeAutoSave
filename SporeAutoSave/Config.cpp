@@ -31,7 +31,12 @@ namespace Config
         if (!std::filesystem::is_regular_file(ConfigPath))
         {
             return SetValue(L"IntervalInMinutes", L"10") &&
-                SetValue(L"MaximumAmountOfBackupSaves", L"5");
+                    SetValue(L"MaximumAmountOfBackupSaves", L"5") &&
+                    SetValue(L"SaveInCellStage", L"1") &&
+                    SetValue(L"SaveInCreatureStage", L"1") &&
+                    SetValue(L"SaveInTribalStage", L"1" )&&
+                    SetValue(L"SaveInCivilizationStage", L"1") &&
+                    SetValue(L"SaveInSpaceStage", L"1");
         }
 
         return true;
