@@ -18,17 +18,17 @@
 
 #define APP_NAME L"SporeAutoSave"
 
-static std::filesystem::path ConfigPath;
+static std::filesystem::path* ConfigPath = nullptr;
 
 namespace Config
 {
     bool Initialize()
-    {     
-        ConfigPath = Resource::Paths::GetSaveArea(Resource::SaveAreaID::Preferences)->GetLocation();
-        ConfigPath += "\\SporeAutoSave.ini";
+    {
+        ConfigPath = new std::filesystem::path(Resource::Paths::GetSaveArea(Resource::SaveAreaID::Preferences)->GetLocation());
+        *ConfigPath += "\\SporeAutoSave.ini";
 
         // create config file when it doesn't exist
-        if (!std::filesystem::is_regular_file(ConfigPath))
+        if (!std::filesystem::is_regular_file(*ConfigPath))
         {
             return SetValue(L"IntervalInMinutes", L"10") &&
                     SetValue(L"MaximumAmountOfBackupSaves", L"5") &&
@@ -42,17 +42,24 @@ namespace Config
         return true;
     }
 
+    void Destroy()
+    {
+	    delete ConfigPath;
+        ConfigPath = nullptr;
+    }
+
+
     std::wstring GetValue(std::wstring keyName, std::wstring defaultValue)
     {
         wchar_t buf[MAX_PATH];
 
-        GetPrivateProfileStringW(APP_NAME, keyName.c_str(), defaultValue.c_str(), buf, MAX_PATH, ConfigPath.wstring().c_str());
+        GetPrivateProfileStringW(APP_NAME, keyName.c_str(), defaultValue.c_str(), buf, MAX_PATH, ConfigPath->wstring().c_str());
 
         return std::wstring(buf);
     }
 
     bool SetValue(std::wstring keyName, std::wstring value)
     {
-        return WritePrivateProfileStringW(APP_NAME, keyName.c_str(), value.c_str(), ConfigPath.wstring().c_str());
+        return WritePrivateProfileStringW(APP_NAME, keyName.c_str(), value.c_str(), ConfigPath->wstring().c_str());
     }
 }
