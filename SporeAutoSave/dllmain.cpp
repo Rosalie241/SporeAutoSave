@@ -108,7 +108,6 @@ void Initialize()
 void Dispose()
 {
     // This method is called when the game is closing
-    Config::Destroy();
 }
 
 void AttachDetours()

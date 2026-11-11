@@ -15,8 +15,6 @@ namespace Config
 {
     bool Initialize();
 
-    void Destroy();
-
     /// <summary>
     ///		Retrieves the value for keyName, returns defaultValue when not found
     /// </summary>
