@@ -1,6 +1,6 @@
 //
 // SporeAutoSave - https://github.com/Rosalie241/SporeAutoSave
-//  Copyright (C) 2021 Rosalie Wanders <rosalie@mailbox.org>
+//  Copyright (C) 2026 Rosalie Wanders <rosalie@mailbox.org>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU Affero General Public License version 3.
@@ -19,10 +19,8 @@
 #include "Config.hpp"
 #include "AutoSaveStrategy.hpp"
 
-#include <thread>
 #include <string>
 #include <filesystem>
-#include <chrono>
 
 //
 // Helper functions
@@ -105,17 +103,6 @@ void Initialize()
     SimulatorSystem.AddStrategy(&autoSaveStrategy, id("SporeAutoSave"));
 }
 
-void Dispose()
-{
-    // This method is called when the game is closing
-}
-
-void AttachDetours()
-{   
-    // Call the attach() method on any detours you want to add
-    // For example: cViewer_SetRenderType_detour::attach(GetAddress(cViewer, SetRenderType));
-}
-
 
 // Generally, you don't need to touch any code here
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -127,11 +114,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
         ModAPI::AddPostInitFunction(Initialize);
-        ModAPI::AddDisposeFunction(Dispose);
-
-        PrepareDetours(hModule);
-        AttachDetours();
-        CommitDetours();
         break;
 
     case DLL_PROCESS_DETACH:
