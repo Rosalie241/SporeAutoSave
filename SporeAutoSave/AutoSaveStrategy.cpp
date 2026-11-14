@@ -13,11 +13,13 @@
 
 #include <Spore\UTFWin\cSPUIMessageBox.h>
 
+#include <atomic>
+
 //
 // Local Variables
 //
 
-static volatile bool l_SkipSaveDialog = false;
+static std::atomic<bool> l_SkipSaveDialog = false;
 
 //
 // Detours
@@ -35,13 +37,13 @@ static_detour(ShowDialogDetour, bool(UTFWin::MessageBoxCallback*, ResourceKey*))
         // and the local variable to skip the dialog is set
         if (callback != nullptr && name != nullptr)
         {
-            if (l_SkipSaveDialog &&
+            if (l_SkipSaveDialog.load() &&
                 name->typeID == 0x00B1B104 &&
                 name->groupID == 0xF5F6FDE8 &&
                 name->instanceID == 0x478A48AB)
             {
                 callback->OnButtonPress(nullptr, UTFWin::cSPUIMessageBox::kButtonOK);
-                l_SkipSaveDialog = false;
+                l_SkipSaveDialog.store(false);
                 return true;
             }
         }
@@ -73,7 +75,7 @@ std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList(std::file
     }
 
     // sort directories, make sure the oldest backup save is first
-    std::sort(backupSaveList.begin(), backupSaveList.end(), [](std::filesystem::path& a, std::filesystem::path& b)
+    std::sort(backupSaveList.begin(), backupSaveList.end(), [](const std::filesystem::path& a, const std::filesystem::path& b)
     {
         auto aTime = std::filesystem::last_write_time(a);
         auto bTime = std::filesystem::last_write_time(b);
@@ -92,47 +94,46 @@ bool AutoSaveStrategy::BackupSave()
     }
 
     std::filesystem::path currentSavePath = Resource::Paths::GetSaveArea(Resource::SaveAreaID::GamesGame0)->GetLocation();
-    std::filesystem::path backupSavePath  = m_BackupSavePath;
-    std::filesystem::path saveName        = currentSavePath.has_filename() ? currentSavePath.filename() : currentSavePath.parent_path().filename();
+    std::filesystem::path backupSavePath = m_BackupSavePath;
+    std::filesystem::path saveName = currentSavePath.has_filename() ? currentSavePath.filename() : currentSavePath.parent_path().filename();
     std::vector<std::filesystem::path> backupSaveList = GetBackupSaveList(saveName);
+    std::error_code errorCode;
 
     // make sure we only keep a certain amount of backup saves
     if (backupSaveList.size() >= m_MaximumAmountOfBackupSaves)
     {
-        std::filesystem::path oldestBackupSave = backupSaveList.at(0);
-        try
+        const std::filesystem::path& oldestBackupSave = backupSaveList.at(0);
+        std::filesystem::remove_all(oldestBackupSave, errorCode);
+        if (errorCode)
         {
-            std::filesystem::remove_all(oldestBackupSave);
-        }
-        catch (...)
-        {
-            App::ConsolePrintF("SporeAutoSave: std::filesystem::remove_all(\"%s\") failed!", oldestBackupSave.string().c_str());
+            App::ConsolePrintF("SporeAutoSave: std::filesystem::remove_all(\"%s\") failed: %s",
+                oldestBackupSave.string().c_str(), errorCode.message().c_str());
             return false;
         }
     }
 
-    char backupDirectoryBuffer[256] = { 0 };
+    char buffer[256] = { 0 };
     time_t currentTime = time(nullptr);
-    tm currentTimeTm;
+    tm currentTimeTm = { 0 };
 
-    if (localtime_s(&currentTimeTm, &currentTime) != 0)
+    errno_t err = localtime_s(&currentTimeTm, &currentTime);
+    if (err != 0)
     {
-        App::ConsolePrintF("SporeAutoSave: localtime_s() failed!");
+        strerror_s(buffer, sizeof(buffer), err);
+        App::ConsolePrintF("SporeAutoSave: localtime_s() failed: %s", buffer);
         return false;
     }
 
-    strftime(backupDirectoryBuffer, sizeof(backupDirectoryBuffer), ".Backup.%F.%H_%M_%S", &currentTimeTm);
+    strftime(buffer, sizeof(buffer), ".Backup.%F.%H_%M_%S", &currentTimeTm);
 
     backupSavePath += L"\\" + saveName.wstring();
-    backupSavePath += backupDirectoryBuffer;
+    backupSavePath += buffer;
 
-    try
+    std::filesystem::copy(currentSavePath, backupSavePath, std::filesystem::copy_options::recursive, errorCode);
+    if (errorCode)
     {
-        std::filesystem::copy(currentSavePath, backupSavePath, std::filesystem::copy_options::recursive);
-    }
-    catch (...)
-    {
-        App::ConsolePrintF("SporeAutoSave: std::filesystem::copy(\"%s\", \"%s\") failed!", currentSavePath.c_str(), backupSavePath.c_str());
+        App::ConsolePrintF("SporeAutoSave: std::filesystem::copy(\"%s\", \"%s\") failed: %s", 
+            currentSavePath.c_str(), backupSavePath.c_str(), errorCode.message().c_str());
         return false;
     }
 
@@ -141,7 +142,7 @@ bool AutoSaveStrategy::BackupSave()
 
 void AutoSaveStrategy::SaveGame()
 {
-    l_SkipSaveDialog = true;
+    l_SkipSaveDialog.store(true);
     MessageManager.MessageSend(static_cast<uint32_t>(MessageID::OnSave), nullptr);
 }
 
