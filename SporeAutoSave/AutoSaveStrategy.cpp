@@ -13,6 +13,7 @@
 
 #include <Spore\UTFWin\cSPUIMessageBox.h>
 
+#include <algorithm>
 #include <atomic>
 
 //
@@ -38,9 +39,9 @@ static_detour(ShowDialogDetour, bool(UTFWin::MessageBoxCallback*, ResourceKey*))
         if (callback != nullptr && name != nullptr)
         {
             if (l_SkipSaveDialog.load() &&
-                name->typeID == 0x00B1B104 &&
-                name->groupID == 0xF5F6FDE8 &&
-                name->instanceID == 0x478A48AB)
+                name->typeID == 0x00b1b104 &&
+                name->groupID == 0xf5f6fde8 &&
+                name->instanceID == 0x478a48ab)
             {
                 callback->OnButtonPress(nullptr, UTFWin::cSPUIMessageBox::kButtonOK);
                 l_SkipSaveDialog.store(false);
@@ -63,7 +64,7 @@ std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList(std::file
 
     for (const auto& entry : std::filesystem::directory_iterator(m_BackupSavePath))
     {
-        std::wstring path = entry.path().wstring();
+        const std::wstring& path = entry.path().wstring();
         if (path.find(backupPathPrefix) == std::wstring::npos ||
             !std::filesystem::is_directory(entry))
         { // skip directories which don't contain .Backup.
@@ -133,7 +134,7 @@ bool AutoSaveStrategy::BackupSave()
     if (errorCode)
     {
         App::ConsolePrintF("SporeAutoSave: std::filesystem::copy(\"%s\", \"%s\") failed: %s", 
-            currentSavePath.c_str(), backupSavePath.c_str(), errorCode.message().c_str());
+            currentSavePath.string().c_str(), backupSavePath.string().c_str(), errorCode.message().c_str());
         return false;
     }
 
