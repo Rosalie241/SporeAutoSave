@@ -44,8 +44,6 @@ static void DisplayError(const char* fmt, ...)
 
 void Initialize()
 {
-    int autoSaveIntervalInMinutes = 0;
-    int maximumAmountOfBackupSaves = 0;
     std::filesystem::path backupSavePath;
 
     if (!Config::Initialize())
@@ -54,44 +52,24 @@ void Initialize()
         return;
     }
 
-    std::wstring intervalString = Config::GetValue(L"IntervalInMinutes", L"10");
-    try
-    {
-        autoSaveIntervalInMinutes = std::stoi(intervalString);
-
-        // safety check
-        if (autoSaveIntervalInMinutes <= 0)
-        {
-            throw std::exception();
-        }
-    }
-    catch (...)
+    int intervalInMinutes = Config::GetIntValue(L"IntervalInMinutes", -1);
+    if (intervalInMinutes <= 0)
     {
         DisplayError("IntervalInMinutes is invalid, disabling SporeAutoSave!");
+        return;
+    }
+
+    int maximumAmountOfBackupSaves = Config::GetIntValue(L"MaximumAmountOfBackupSaves", -1);
+    if (maximumAmountOfBackupSaves <= 0)
+    {
+        DisplayError("MaximumAmountOfBackupSaves is invalid, disabling SporeAutoSave!");
         return;
     }
 
     backupSavePath = Resource::Paths::GetDirFromID(Resource::PathID::AppData);
     backupSavePath += "\\Games";
 
-    std::wstring maximumBackupsString = Config::GetValue(L"MaximumAmountOfBackupSaves", L"5");
-    try
-    {
-        maximumAmountOfBackupSaves = std::stoi(maximumBackupsString);
-
-        // safety check
-        if (maximumAmountOfBackupSaves <= 0)
-        {
-            throw std::exception();
-        }
-    }
-    catch (...)
-    {
-        DisplayError("MaximumAmountOfBackupSaves is invalid, disabling SporeAutoSave!");
-        return;
-    }
-
-    static AutoSaveStrategy autoSaveStrategy(autoSaveIntervalInMinutes, maximumAmountOfBackupSaves, backupSavePath);
+    static AutoSaveStrategy autoSaveStrategy(intervalInMinutes, maximumAmountOfBackupSaves, backupSavePath);
 
     // add all message IDs
     for (const uint32_t messageID : autoSaveStrategy.GetHandledMessageIDs())

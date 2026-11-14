@@ -148,7 +148,7 @@ void AutoSaveStrategy::SaveGame()
 
 void AutoSaveStrategy::OnModeEntered(uint32_t previousModeID, uint32_t newModeID)
 {
-    std::wstring value = L"invalid";
+    bool value = false;
 
     switch (newModeID)
     {
@@ -157,23 +157,23 @@ void AutoSaveStrategy::OnModeEntered(uint32_t previousModeID, uint32_t newModeID
         break;
 
     case GameModeIDs::kGameCell:
-        value = Config::GetValue(L"SaveInCellStage", L"1");
+        value = Config::GetBoolValue(L"SaveInCellStage");
         break;
     case GameModeIDs::kGameCreature:
-        value = Config::GetValue(L"SaveInCreatureStage", L"1");
+        value = Config::GetBoolValue(L"SaveInCreatureStage");
         break;
     case GameModeIDs::kGameTribe:
-        value = Config::GetValue(L"SaveInTribalStage", L"1");
+        value = Config::GetBoolValue(L"SaveInTribalStage");
         break;
     case GameModeIDs::kGameCiv:
-        value = Config::GetValue(L"SaveInCivilizationStage", L"1");
+        value = Config::GetBoolValue(L"SaveInCivilizationStage");
         break;
     case GameModeIDs::kGameSpace:
-        value = Config::GetValue(L"SaveInSpaceStage", L"1");
+        value = Config::GetBoolValue(L"SaveInSpaceStage");
         break;
     }
 
-    if (value.empty() || value == L"1")
+    if (value)
     {
         m_NextSaveTime = std::chrono::high_resolution_clock::now() + std::chrono::minutes(m_SaveIntervalInMinutes);
         m_IsInValidMode = true;

@@ -9,7 +9,7 @@
 //
 #pragma once
 
-#include <iostream>
+#include <string>
 
 namespace Config
 {
@@ -18,16 +18,31 @@ namespace Config
     /// <summary>
     ///		Retrieves the value for keyName, returns defaultValue when not found
     /// </summary>
-    /// <param name="keyName"></param>
-    /// <param name="defaultValue"></param>
-    /// <returns></returns>
-    std::wstring GetValue(std::wstring keyName, std::wstring defaultValue);
+    std::wstring GetStringValue(std::wstring keyName, std::wstring defaultValue);
+
+    /// <summary>
+    ///		Retrieves the boolean value for keyName, returns false when not found
+    /// </summary>
+    bool GetBoolValue(std::wstring keyName);
+
+
+    /// <summary>
+    ///		Retrieves the integer value for keyName, returns defaultValue when not found
+    /// </summary>
+    int GetIntValue(std::wstring keyName, int defaultValue);
 
     /// <summary>
     ///		Sets the value for keyName with value
     /// </summary>
-    /// <param name="keyName"></param>
-    /// <param name="value"></param>
-    /// <returns>Whether setting the value was successful</returns>
     bool SetValue(std::wstring keyName, std::wstring value);
+
+    /// <summary>
+    ///		Sets the value for keyName with value
+    /// </summary>
+    bool SetValue(std::wstring keyName, int value);
+
+    /// <summary>
+    ///		Sets the value for keyName with value
+    /// </summary>
+    bool SetValue(std::wstring keyName, bool value);
 }
