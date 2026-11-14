@@ -11,6 +11,49 @@
 #include "AutoSaveStrategy.hpp"
 #include "Config.hpp"
 
+#include <Spore\UTFWin\cSPUIMessageBox.h>
+
+//
+// Local Variables
+//
+
+static volatile bool l_SkipSaveDialog = false;
+
+//
+// Detours
+//
+
+// this is sadly kinda hacky, but we cannot disable the 'the game on planet X has been saved' dialog creation
+// because it's called in the middle of a function (see march2017 0x00b29e29), so as a workaround
+// detour UTFWin::cSPUIMessageBox::ShowDialog() and check for the correct resource key IDs alongside
+// a local variable boolean to check if we should skip it.
+static_detour(ShowDialogDetour, bool(UTFWin::MessageBoxCallback*, ResourceKey*))
+{
+    bool detoured(UTFWin::MessageBoxCallback* callback, ResourceKey* name)
+    {
+        // skip showing dialog when the resource key matches
+        // and the local variable to skip the dialog is set
+        if (callback != nullptr && name != nullptr)
+        {
+            if (l_SkipSaveDialog &&
+                name->typeID == 0x00B1B104 &&
+                name->groupID == 0xF5F6FDE8 &&
+                name->instanceID == 0x478A48AB)
+            {
+                callback->OnButtonPress(nullptr, UTFWin::cSPUIMessageBox::kButtonOK);
+                l_SkipSaveDialog = false;
+                return true;
+            }
+        }
+
+        return original_function(callback, name);
+    }
+};
+
+//
+// Exported Functions
+//
+
 std::vector<std::filesystem::path> AutoSaveStrategy::GetBackupSaveList(std::filesystem::path saveName)
 {
     std::vector<std::filesystem::path> backupSaveList;
@@ -98,7 +141,8 @@ bool AutoSaveStrategy::BackupSave()
 
 void AutoSaveStrategy::SaveGame()
 {
-    CALL(Address(ModAPI::ChooseAddress(0x00e54560, 0x00e53f00)), void, Args(void), Args());
+    l_SkipSaveDialog = true;
+    MessageManager.MessageSend(static_cast<uint32_t>(MessageID::OnSave), nullptr);
 }
 
 void AutoSaveStrategy::OnModeEntered(uint32_t previousModeID, uint32_t newModeID)
@@ -177,8 +221,8 @@ std::vector<uint32_t> AutoSaveStrategy::GetHandledMessageIDs(void)
 {
     std::vector<uint32_t> handledMessageIDs;
 
-    handledMessageIDs.push_back((uint32_t)MessageID::OnSave);
-    handledMessageIDs.push_back((uint32_t)MessageID::OnPauseToggled);
+    handledMessageIDs.push_back(static_cast<uint32_t>(MessageID::OnSave));
+    handledMessageIDs.push_back(static_cast<uint32_t>(MessageID::OnPauseToggled));
 
     return handledMessageIDs;
 }
@@ -195,12 +239,12 @@ bool AutoSaveStrategy::HandleMessage(uint32_t messageID, void* message)
     default:
         break;
 
-    case (uint32_t)MessageID::OnSave:
+    case static_cast<uint32_t>(MessageID::OnSave):
         m_NextSaveTime = std::chrono::high_resolution_clock::now() +
                          std::chrono::minutes(m_SaveIntervalInMinutes);
         break;
 
-    case (uint32_t)MessageID::OnPauseToggled:
+    case static_cast<uint32_t>(MessageID::OnPauseToggled):
         if (m_IsPaused && message == nullptr)
         { // unpaused
             m_NextSaveTime =
@@ -217,5 +261,10 @@ bool AutoSaveStrategy::HandleMessage(uint32_t messageID, void* message)
     }
 
     return false;
+}
+
+void AutoSaveStrategy::AttachDetours(void)
+{
+    ShowDialogDetour::attach(GetAddress(UTFWin::cSPUIMessageBox, ShowDialog));
 }
 

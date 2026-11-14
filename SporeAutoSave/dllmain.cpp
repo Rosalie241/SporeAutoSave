@@ -35,7 +35,7 @@ static void DisplayError(const char* fmt, ...)
     vsprintf(buf, fmt, args);
     va_end(args);
 
-    MessageBoxA(NULL, buf, "SporeAutoSave", MB_OK | MB_ICONERROR);
+    MessageBoxA(nullptr, buf, "SporeAutoSave", MB_OK | MB_ICONERROR);
 }
 
 //
@@ -47,7 +47,6 @@ void Initialize()
     int autoSaveIntervalInMinutes = 0;
     int maximumAmountOfBackupSaves = 0;
     std::filesystem::path backupSavePath;
-    wchar_t envBuffer[MAX_PATH];
 
     if (!Config::Initialize())
     {
@@ -103,8 +102,6 @@ void Initialize()
     SimulatorSystem.AddStrategy(&autoSaveStrategy, id("SporeAutoSave"));
 }
 
-
-// Generally, you don't need to touch any code here
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
     LPVOID lpReserved
@@ -114,6 +111,10 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
         ModAPI::AddPostInitFunction(Initialize);
+
+        PrepareDetours(hModule);
+        AutoSaveStrategy::AttachDetours();
+        CommitDetours();
         break;
 
     case DLL_PROCESS_DETACH:

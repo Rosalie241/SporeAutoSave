@@ -83,6 +83,8 @@ public:
 
     std::vector<uint32_t> GetHandledMessageIDs(void);
     bool HandleMessage(uint32_t messageID, void* message) override;
+
+    static void AttachDetours(void);
 };
 
 
